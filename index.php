@@ -56,6 +56,9 @@ if ( !isset( $_SESSION['user_id'] ) ) {
     exit;
 }
 
+$user_id = $_SESSION['user_id'];
+$user_name = $_SESSION['user_name'];
+
 // Show Game Board View
 if ( isset( $_GET['game'] ) ) {
     // Pass essential data to the view before requiring it

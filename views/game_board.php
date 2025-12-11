@@ -32,7 +32,7 @@ $current_player_role = $is_player_x ? 'X' : ( $is_player_o ? 'O' : null );
     <div class="container my-5">
         <div class="row justify-content-center">
             <div class="col-lg-8">
-                <h1 class="text-center text-primary mb-4">⚔️ Game Session #<?=$game_id?></h1>
+                <h1 class="text-center text-primary mb-4">Game Session #<?=$game_id?></h1>
 
                 <div class="card shadow">
                     <div class="card-header text-center bg-dark text-white">
@@ -61,7 +61,8 @@ $current_player_role = $is_player_x ? 'X' : ( $is_player_o ? 'O' : null );
         </div>
     </div>
 
-    <script>
+<script>
+        // --- PHP Variables passed to JavaScript ---
         const GAME_ID = <?=$game_id?>;
         const USER_ID = <?=$user_id?>;
         const USER_ROLE = '<?=$current_player_role?>';
@@ -69,11 +70,68 @@ $current_player_role = $is_player_x ? 'X' : ( $is_player_o ? 'O' : null );
         let gameStatus = '<?=$game['status']?>';
         let boardState = '<?=$game['board_state']?>';
 
-        // Core Game Functions
+        // --- Core Game Functions ---
+        // Renders the current state of the boardState
+        function renderBoard() {
+            for (let i = 0; i < 9; i++) {
+                const cell = $(`#board .cell[data-index=${i}]`);
+                const marker = boardState[i];
+                cell.removeClass('X O filled');
+                cell.text('');
+                if (marker !== '-') {
+                    cell.text(marker).addClass(marker + ' filled');
+                }
+            }
+        }
 
-        function renderBoard() {  }
-        function updateUI(data) {  }
+        // Updates the UI based on the latest game data.
+        function updateUI(data) {
+            const statusDiv = $('#game-status');
+            const boardCells = $('#board .cell');
+            boardState = data.board_state;
+            gameStatus = data.status;
 
+            renderBoard();
+
+            let alertClass = 'alert-info';
+            let message = '';
+
+            // Check if it's this user's turn AND the game is in progress
+            isMyTurn = (data.current_turn === USER_ROLE && data.status === 'IN_PROGRESS');
+            let game_over = (data.status !== 'WAITING' && data.status !== 'IN_PROGRESS');
+
+            if (data.status === 'WAITING') {
+                message = `Waiting for Player ${USER_ROLE === 'X' ? 'O' : 'X'} to join...`;
+                alertClass = 'alert-warning';
+            } else if (game_over) {
+                message = data.status.replace('_', ' ');
+                // Check win/loss/draw status for appropriate color
+                alertClass = (data.status.includes('WINS') && data.status.includes(USER_ROLE)) ? 'alert-success' : (data.status.includes('WINS') ? 'alert-danger' : 'alert-secondary');
+            } else if (isMyTurn) {
+                message = `🎯 Your Turn (${USER_ROLE})! Make a move.`;
+                alertClass = 'alert-primary';
+            } else {
+                message = `⏳ Opponent's Turn (${data.current_turn}). Please wait.`;
+                alertClass = 'alert-info';
+            }
+
+            statusDiv.removeClass().addClass(`alert ${alertClass} w-75 mb-0`).html(message);
+
+            // Enable/Disable clicks based on turn and game status
+            boardCells.removeClass('disabled');
+            if (game_over || !isMyTurn) {
+                boardCells.addClass('disabled');
+            } else {
+                boardCells.each(function() {
+                    const index = $(this).data('index');
+                    if (boardState[index] !== '-') {
+                        $(this).addClass('disabled');
+                    }
+                });
+            }
+        }
+
+        // AJAX Polling Function
         function pollGameState() {
             $.ajax({
                 url: 'api/get_state.php',
@@ -83,20 +141,24 @@ $current_player_role = $is_player_x ? 'X' : ( $is_player_o ? 'O' : null );
                 success: function(response) {
                     if (response.success) {
                         updateUI(response.game);
+                    } else {
+                        console.error("Failed to get game state:", response.message);
                     }
                 },
-                error: function(xhr, status, error) { console.error("Polling error:", error); }
+                error: function(xhr, status, error) { console.error("Polling AJAX error:", error); }
             });
         }
 
+        // --- Initialization and Event Handler ---
         pollGameState();
-        setInterval(pollGameState, 2000);
+        setInterval(pollGameState, 2000); // Poll every 2 seconds
 
         $('#board').on('click', '.cell:not(.disabled)', function() {
             if (!isMyTurn || gameStatus !== 'IN_PROGRESS') return;
 
             const cellIndex = $(this).data('index');
 
+            // Optimistic UI update
             $(this).text(USER_ROLE).addClass(USER_ROLE + ' filled disabled');
             isMyTurn = false;
             $('#game-status').removeClass().addClass('alert alert-info w-75 mb-0').html(`⏳ Opponent's Turn...`);
@@ -113,6 +175,7 @@ $current_player_role = $is_player_x ? 'X' : ( $is_player_o ? 'O' : null );
                 },
                 success: function(response) {
                     if (!response.success) {
+                        // If server rejects the move, force immediate re-poll to revert the UI
                         pollGameState();
                         alert(response.message);
                     }
