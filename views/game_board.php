@@ -9,7 +9,7 @@ $current_player_role = $is_player_x ? 'X' : ( $is_player_o ? 'O' : null );
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game #<?=$game_id?> | Connect-X</title>
+    <title>Game #<?=$game_id?> | Tic-Tac-Toe</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <style>

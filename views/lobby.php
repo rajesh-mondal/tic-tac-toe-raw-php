@@ -27,12 +27,12 @@ $my_games = $stmt->fetchAll( PDO::FETCH_ASSOC );
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connect-X Lobby</title>
+    <title>Tic-Tac-Toe Lobby</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
     <div class="container my-5">
-        <h1 class="text-center text-primary mb-4">Welcome, <?=htmlspecialchars( $user_name )?>!</h1>
+        <h2 class="text-center text-primary fw-semibold mb-4">Welcome, <?=htmlspecialchars( $user_name )?>!</h2>
         <div class="row">
             <div class="col-lg-6 mb-4">
                 <div class="card shadow-sm">
@@ -48,7 +48,7 @@ $my_games = $stmt->fetchAll( PDO::FETCH_ASSOC );
 
             <div class="col-lg-6 mb-4">
                 <div class="card shadow-sm">
-                    <div class="card-header bg-info text-white"><h5 class="mb-0">Available Games to Join</h5></div>
+                    <div class="card-header bg-primary text-white"><h5 class="mb-0">Available Games to Join</h5></div>
                     <div class="card-body p-0">
                         <?php if ( count( $waiting_games ) > 0 ): ?>
                             <table class="table table-hover mb-0">
